@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calc Resume Years : 入学・卒業年計算</title>
+    
+    <!-- Neo's GitHub Pages Favicon -->
+    <link rel="icon" href="https://neos21.github.io/favicon.ico">
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="ls7kuvIKSqVa_dcixqKvFwl393swvYMkHCkG-xtlCj0">
+    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LP3ZQV2R3M"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-LP3ZQV2R3M');gtag('config','UA-106501-6');</script>
+    <!-- Google AdSense -->
+    <script data-ad-client="ca-pub-6475907504235292" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    
+    <style>
+
+/* General
+ * ================================================================================ */
+
+:root {
+  --colour-text      : #000;
+  --colour-border    : #999;
+  --colour-background: #fff;
+  --colour-invalid   : #f00;
+  --colour-grey-900  : #f6f6f6;
+  --colour-grey-800  : #f0f0f0;
+  --colour-grey-700  : #e9e9e9;
+  --colour-grey-600  : #e3e3e3;
+}
+
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow: auto scroll;
+  color: var(--colour-text);
+  font-size: 16px;
+  font-family: monospace;
+  background: var(--colour-background);
+  cursor: default;
+}
+
+body {
+  margin: 1.25rem 0;
+  padding: 0;
+}
+
+a {
+  outline: 0;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus,
+a:active {
+  text-decoration: underline;
+}
+
+button, input, select {
+          appearance: none;
+  -webkit-appearance: none;  /* For iOS Safari */
+  height: 1.5rem;
+  margin: 0;
+  padding: .1rem .3rem;
+  border: 1px solid var(--colour-border);
+  border-radius: .2rem;
+  outline: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1.1;
+  vertical-align: top;
+  background: var(--colour-background);
+}
+
+button, select {
+  cursor: pointer;
+}
+
+button {
+  padding-right: .6rem;
+  padding-left : .6rem;
+  background: var(--colour-grey-900);
+}
+
+button:hover  { background: var(--colour-grey-800); }
+button:focus  { background: var(--colour-grey-700); }
+button:active { background: var(--colour-grey-600); }
+
+select:hover  { background: var(--colour-grey-900); }
+select:focus  { background: var(--colour-grey-800); }
+select:active { background: var(--colour-grey-700); }
+
+option {
+  background: var(--colour-background);
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid var(--colour-border);
+  padding: .1rem .5rem;
+}
+
+caption {
+  margin-bottom: .25rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+thead th {
+  text-align: center;
+  background: var(--colour-grey-800);
+}
+
+
+/* Page
+ * ================================================================================ */
+
+.wrapper {
+  max-width: 24rem;
+  margin: 0 auto;
+  border: 1px solid var(--colour-border);
+  padding: 0 .5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.wrapper > * {
+  margin-top   : 1rem;
+  margin-bottom: 1rem;
+}
+
+.wrapper > .title,
+.wrapper > .buttons {
+  margin-top: .5rem;
+}
+
+.title {
+  font-size: inherit;
+}
+
+.title a {
+  color: inherit;
+}
+
+.input-form input {
+  margin-right: .2rem;
+  text-align: right;
+  ime-mode: disabled;  /* 数字のみ入力できれば良いので IME は無効にしたいが効果のあるブラウザが減ってきているので気休め程度 */
+}
+
+label[for="input-year-era-name"] {
+  position: relative;
+}
+
+label[for="input-year-era-name"]::after {
+  content: "\2039";  /* 下向きのシェブロン記号を作る */
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  display: inline-block;
+  color: var(--colour-600);
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+#input-year-era-name {
+  width: 4.5rem;
+}
+
+#input-year {
+  width: 3.5rem;
+}
+
+#input-month,
+#input-date {
+  width: 2rem;
+}
+
+.invalid {
+  border-color: var(--colour-invalid);
+}
+
+#error-messages {
+  color: var(--colour-invalid);
+  text-align: left;
+  white-space: normal;
+}
+
+#error-messages ul {
+  margin: 0;
+}
+
+#error-messages li::marker {
+  color: var(--colour-text);
+}
+
+#resume-table table {
+  margin-right: auto;
+  margin-left : auto;
+}
+
+#resume-table tbody td {
+  text-align: right;
+}
+
+#github-link {
+  position: absolute;
+  top: .2rem;
+  right: .5rem;
+  color: var(--colour-border);
+  font-size: .8rem;
+  line-height: 1;
+}
+
+    </style>
+    <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+  // Constants
+  // ================================================================================
+  
+  /** 「元号」セレクトボックスの「西暦」の物理名 */
+  const eraValueGregorian = 'gregorian';
+  
+  /** 元号ごとの名称・開始日・終了日定義 */
+  const japaneseEras = {
+    showa : {
+      name      : '昭和',
+      startYear : 1926,
+      startMonth: 12,
+      startDate : 25,
+      endYear   : 1989,
+      endMonth  : 1,
+      endDate   : 7
+    },
+    heisei: {
+      name      : '平成',
+      startYear : 1989,
+      startMonth: 1,
+      startDate : 8,
+      endYear   : 2019,
+      endMonth  : 4,
+      endDate   : 30
+    },
+    reiwa : {
+      name      : '令和',
+      startYear : 2019,
+      startMonth: 5,
+      startDate : 1,
+      endYear   : 2117,  // 仮 : 和暦は2桁で管理したいので令和99年 = 2117年を仮の終了年とする・2117年なんて俺が126歳の計算になるからそんな未来のことは知らん
+      endMonth  : 12,    // 仮
+      endDate   : 31     // 仮
+    }
+  };
+  
+  /** 入力チェックエラーを示す CSS クラス名 */
+  const invalidCssClassName = 'invalid';
+  
+  
+  // UI Functions
+  // ================================================================================
+  
+  /**
+   * 指定 ID の DOM 要素を取得する
+   * 
+   * @param {string} id ID
+   * @return {HTMLElement} DOM 要素
+   */
+  const $ = id => document.getElementById(id);
+  
+  /**
+   * 各種入力チェックを行う
+   * 
+   * @return {{ isValid: boolean, errorMessages: Array<string> }} result 結果オブジェクト
+   *         isValid       : エラーが一つもなければ `true`
+   *         errorMessages : エラーメッセージの配列
+   */
+  const validate = () => {
+    // エラーメッセージの配列
+    const errorMessages = [];
+    
+    // 「元号」セレクトボックス
+    const eraName = $('input-year-era-name').value;
+    
+    // 「年」単体のチェック
+    const inputYear = $('input-year');
+    const year = inputYear.value;
+    let isValidGregorianYear = false;  // 正しい西暦が入力されていれば `true` (和暦での入力時は常に `false`)
+    let isValidJapaneseYear  = false;  // 正しい和暦が入力されていれば `true` (西暦での入力時は常に `false`)
+    if(isEmptyValue(year)) {
+      setInvalid(inputYear, '年が未入力です');
+    }
+    else if(eraName === eraValueGregorian) {
+      if((/^[1-2]{1}[0-9]{3}$/u).test(year) && Number(year) >= japaneseEras.showa.startYear && Number(year) <= japaneseEras.reiwa.endYear) {
+        setValid(inputYear, `Year (西暦) [${year}]`);
+        isValidGregorianYear = true;
+      }
+      else {
+        setInvalid(inputYear, `西暦が正しくありません (${japaneseEras.showa.startYear} ～ ${japaneseEras.reiwa.endYear} 年の4桁で入力)`);
+      }
+    }
+    else {  // 和暦入力時
+      const eraInfo = japaneseEras[eraName];
+      if(!eraInfo) {
+        setInvalid(inputYear, '選択された元号が不正です');
+      }
+      else if(!(/^[0-9]{1,2}$/u).test(year)) {  // 数字1～2桁を許容する
+        setInvalid(inputYear, '和暦年数が正しくありません');
+      }
+      else if(Number(year) > (eraInfo.endYear + 1 - eraInfo.startYear)) {  // 当該元号の最終年を超えていないこと
+        setInvalid(inputYear, `和暦年数が ${eraInfo.name} の範囲外です`);
+      }
+      else {
+        setValid(inputYear, `Year (和暦) [${eraInfo.name}] [${year}]`);
+        isValidJapaneseYear = true;
+      }
+    }
+    
+    // 「月」単体のチェック
+    const inputMonth = $('input-month');
+    const month = inputMonth.value;
+    let isValidMonth = false;
+    if(isEmptyValue(month)) {
+      setInvalid(inputMonth, '月が未入力です');
+    }
+    else if((/^[0-1]{0,1}[0-9]{1}$/u).test(month) && Number(month) >= 1 && Number(month) <= 12) {
+      setValid(inputMonth, `Month [${month}]`);
+      isValidMonth = true;
+    }
+    else {
+      setInvalid(inputMonth, '月が正しくありません');
+    }
+    
+    // 「日」単体のチェック
+    const inputDate = $('input-date');
+    const date = inputDate.value;
+    let isValidDate = false;
+    if(isEmptyValue(date)) {
+      setInvalid(inputDate, '日が未入力です');
+    }
+    else if((/^[0-3]{0,1}[0-9]{1}$/u).test(date) && Number(date) >= 1 && Number(date) <= 31) {
+      setValid(inputDate, `Date [${date}]`);
+      isValidDate = true;
+    }
+    else {
+      setInvalid(inputDate, '日が正しくありません');
+    }
+    
+    // 月・日が正しく入力されている場合は月の最終日チェックと昭和以前のチェックをする
+    if(isValidMonth && isValidDate) {
+      const numberMonth = Number(month);
+      const numberDate = Number(date);
+      if(numberMonth === 2) {
+        // 2月の場合はうるう年を考慮するため入力年を見る
+        const numberYear = isValidGregorianYear ? Number(year)
+                         : isValidJapaneseYear  ? japaneseYearToGregorianYear(eraName, Number(year))
+                         : null;
+        if(numberYear == null && numberDate > 29) {  // 年の入力が不正な場合は「2月30日」「2月31日」が発生しないようにだけ避ける
+          setInvalid(inputMonth);
+          setInvalid(inputDate, '不正な 2 月の日付です');
+        }
+        else if(numberDate > new Date(numberYear, 2, 0).getDate()) {  // 指定年の「3月0日」= 指定年の2月最終日付
+          setInvalid(inputYear);
+          setInvalid(inputMonth);
+          setInvalid(inputDate, `${numberYear} 年 2 月の最終日を超えています`);
+        }
+        else {
+          const yearMessage = isValidGregorianYear ? `西暦 [${year} 々]`
+                            : isValidJapaneseYear  ? `和暦 [${japaneseEras[eraName].name}] [${year} 年] = 西暦 [${numberYear} 年]`
+                            : '(年未入力)';
+          console.log(`Validate : 2月最終日超過 OK : ${yearMessage} [${numberMonth} 月] [${numberDate} 日]`);
+        }
+      }
+      else if(numberDate > new Date(new Date().getFullYear(), numberMonth, 0).getDate()) {
+        // 2月以外の場合は年は関係なく「指定の翌月の0日」から指定月の最終日付を取得する (Month は 0 から計算されるので入力値をそのまま渡せば翌月扱いになる)
+        setInvalid(inputMonth);
+        setInvalid(inputDate, `${numberMonth} 月の最終日を超えています`);
+      }
+      else {
+        console.log(`Validate : 月末最終日超過 OK : [${numberMonth} 月] [${numberDate} 日]`);
+      }
+      
+      // 西暦入力時に昭和開始日以前が入力されていないかチェックする
+      if(eraName === eraValueGregorian && Number(year) === japaneseEras.showa.startYear) {
+        if(numberMonth < japaneseEras.showa.startMonth) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth, `昭和の開始日以前の月が入力されています`);
+        }
+        else if(numberDate < japaneseEras.showa.startDate) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth);
+          setInvalid(inputDate, `昭和の開始日以前の日が入力されています`);
+        }
+      }
+    }
+    
+    // 和暦年数・月までが正しく入力されている場合は年月・年月日の組み合わせで妥当性をチェックする
+    if(isValidJapaneseYear && isValidMonth) {
+      const eraInfo = japaneseEras[eraName];
+      const numberYear = Number(year);
+      const numberMonth = Number(month);
+      const numberDate = isValidDate ? Number(date) : null;
+      
+      if(numberYear === 1) {
+        // 元年の場合は開始月・開始日以前が入力されていないこと
+        if(numberMonth < eraInfo.startMonth) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth, `${eraInfo.name} の開始月以前が入力されています`);
+        }
+        else if(isValidDate && numberDate < eraInfo.startDate) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth);
+          setInvalid(inputDate, `${eraInfo.name} の開始日以前が入力されています`);
+        }
+        else {
+          const dateMessage = numberDate == null ? '(日未入力)' : `[${numberDate} 日]`;
+          console.log(`Validate : 和暦 元年 開始年月${numberDate == null ? '' : ' & 日'} OK : [${eraInfo.name}] [${numberYear} 年] [${numberMonth} 月] ${dateMessage}`);
+        }
+      }
+      else if(numberYear === (eraInfo.endYear + 1 - eraInfo.startYear)){
+        // 最終年の場合は終了月・終了日以降が入力されていないこと
+        if(numberMonth > eraInfo.endMonth) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth, `${eraInfo.name} の終了月以降が入力されています`);
+        }
+        else if(isValidDate && numberDate > eraInfo.endDate) {
+          setInvalid(inputYear);
+          setInvalid(inputMonth);
+          setInvalid(inputDate, `${eraInfo.name} の終了日以降が入力されています`);
+        }
+        else {
+          const dateMessage = numberDate == null ? '(日未入力)' : `[${numberDate} 日]`;
+          console.log(`Validate : 和暦 最終年 終了年月${numberDate == null ? '' : ' & 日'} OK : [${eraInfo.name}] [${numberYear} 年] [${numberMonth} 月] ${dateMessage}`);
+        }
+      }
+    }
+    
+    const isValid = errorMessages.length === 0;
+    return { isValid, errorMessages };
+    
+    /**
+     * 値が空値かどうか判定する
+     * 
+     * @param {string} value 値
+     * @return 空値であれば `true`
+     */
+    function isEmptyValue(value) {
+      return value == null || String(value).trim() === '';
+    }
+    
+    /**
+     * DOM 要素を正常扱いにする (`.invalid` CSS クラスを外す)
+     * 
+     * @param {HTMLElement} DOM 要素
+     * @param {string} logMessage ログメッセージ
+     */
+    function setValid(element, logMessage) {
+      element.classList.remove(invalidCssClassName);
+      if(logMessage) console.log(`Validate : OK : ${logMessage}`);
+    }
+    
+    /**
+     * DOM 要素をエラー扱いにし (`.invalid` CSS クラスを付与する) エラーメッセージを追加する
+     * 
+     * @param {HTMLElement} DOM 要素
+     * @param {string} errorMessage エラーメッセージ・未指定の場合はエラーメッセージを配列に追加しない
+     */
+    function setInvalid(element, errorMessage) {
+      element.classList.add(invalidCssClassName);
+      if(errorMessage) {
+        errorMessages.push(errorMessage);
+        console.warn(`Validate : NG : ${errorMessage}`);
+      }
+    }
+  }
+  
+  /**
+   * エラーメッセージを表示する
+   * 
+   * @param {Array<string>} errorMessages エラーメッセージの配列
+   */
+  const showErrorMessages = errorMessages => $('error-messages').innerHTML = !errorMessages.length ? '' : errorMessages.reduce((html, errorMessage) => html + `<li>${errorMessage}</li>`, '<ul>') + '</ul>';
+  
+  /**
+   * 入学・卒業年表を表示する
+   * 
+   * @param {Array<{ description: string, gregorianYear: number, japaneseEraName: string, japaneseYear: number, month: number, date: number, age: number }>} resumeYears 入学・卒業年表
+   * @param {number} birthYear 西暦
+   * @param {string} birthJapaneseEraName 和暦元号
+   * @param {number} birthJapaneseYear 和暦年
+   * @param {number} birthMonth 月
+   * @param {number} birthDate 日
+   * @param {number} age 生年月日から算出した年齢
+   */
+  const showResumeTable = (resumeYears, birthYear, birthJapaneseEraName, birthJapaneseYear, birthMonth, birthDate, age) => {
+    $('resume-table').innerHTML
+      = `
+          <table>
+            <caption>${age < 0 ? '' : padStartSpace(age, 3) + '歳 '}${birthYear} (${birthJapaneseEraName}${padStartSpace(birthJapaneseYear, 2)}) 年${padStartSpace(birthMonth, 2)}月${padStartSpace(birthDate, 2)}日 生まれ&nbsp;</caption>
+            <thead>
+              <tr>
+                <th>イベント</th>
+                <th>西暦</th>
+                <th>和暦</th>
+                <th>年齢</th>
+              </tr>
+            </thead>
+            <tbody>
+        `
+      + resumeYears.reduce((html, resume) => html + `
+          <tr>
+            <td>${resume.description}</td>
+            <td>${resume.gregorianYear}年${resume.month}月</td>
+            <td>${resume.japaneseEraName}${padStartSpace(resume.japaneseYear, 2)}年${resume.month}月</td>
+            <td>${resume.age}歳</td>
+          </tr>
+        `, '')
+      + `
+            </tbody>
+          </table>
+        `;
+    // NOTE : 「和暦」のデータ列で「令和100年」と3桁表示が発生するが `padStartSpace(resume.japaneseYear, 2)` で2桁整形のままとする
+    
+    /**
+     * 数値の桁揃えのため `&nbsp;` で半角スペースを入れる
+     * 
+     * @param {string | number} value 値
+     * @param {number} maxLength 桁数
+     * @return {string} 延長した値
+     */
+    function padStartSpace(value, maxLength) {
+      return String(value).padStart(maxLength, ' ').replace((/ /gu), '&nbsp;');
+    }
+  };
+  
+  /**
+   * 入力チェック後入学・卒業年表を計算し表示する
+   * 
+   * @return {boolean} 正常に表示まで終了したら `true`・入力チェックで失敗したら `false`
+   */
+  const validateAndCalc = () => {
+    // 入力チェックを行う
+    const validateResult = validate();
+    showErrorMessages(validateResult.errorMessages);
+    if(!validateResult.isValid) {
+      console.log('Invalid Input. Do Nothing');
+      return false;
+    }
+    
+    // 入力値を取得する
+    const eraName = $('input-year-era-name').value;
+    const year = $('input-year').value;
+    const birthYear  = eraName == eraValueGregorian ? Number(year) : japaneseYearToGregorianYear(eraName, Number(year));
+    const birthMonth = Number($('input-month').value);
+    const birthDate  = Number($('input-date').value);
+    // 入学・卒業年表を計算する
+    const resumeYears = calcResumeYears(birthYear, birthMonth, birthDate);
+    // 生年月日から和暦を算出する
+    const { japaneseEraName: birthJapaneseEraName, japaneseYear: birthJapaneseYear } = gregorianYearToJapaneseYear(birthYear, birthMonth, birthDate);
+    // 生年月日から年齢を計算する
+    const age = calcAge(birthYear, birthMonth, birthDate, new Date());
+    // 入学・卒業年表を表示する
+    showResumeTable(resumeYears, birthYear, birthJapaneseEraName, birthJapaneseYear, birthMonth, birthDate, age);
+    return true;
+  };
+  
+  // 「元号」セレクトボックスの入力値を控えておく
+  let beforeInputYearEraName = $('input-year-era-name').value;
+  // 「元号」セレクトボックスの変更時 : 「年」の入力値を確認し可能なら西暦・和暦を相互変換する
+  $('input-year-era-name').addEventListener('change', event => {
+    const afterInputYearEraName = event.target.value;
+    
+    const inputYear = $('input-year');
+    if(isInvalid(inputYear)) {
+      // 年の入力値が不正値なら何もしない
+      console.log('Change Era Name : Invalid Year. Do Nothing');
+    }
+    else {
+      const numberYear = Number(inputYear.value);
+      if(beforeInputYearEraName === eraValueGregorian && afterInputYearEraName !== eraValueGregorian) {
+        console.log(`Change Era Name : Gregorian [${numberYear}] To Japanese`);
+        // 入力中の年月日から和暦を取得する
+        const numberMonth = isInvalid($('input-month')) ? null : Number($('input-month').value);
+        const numberDate  = isInvalid($('input-date' )) ? null : Number($('input-date' ).value);
+        const { japaneseEraName, japaneseYear } = gregorianYearToJapaneseYear(numberYear, numberMonth, numberDate);
+        // 選択した和暦の名称を取得する
+        const inputJapaneseEraName = japaneseEras[afterInputYearEraName].name;
+        // 選択した和暦が変換した和暦と同じ場合のみ入力値を変換する
+        if(inputJapaneseEraName === japaneseEraName) {
+          inputYear.value = japaneseYear;
+          console.log(`Change Era Name : Gregorian [${numberYear}] To Japanese : OK [${japaneseEraName} ${japaneseYear}]`);
+        }
+        else {
+          console.log(`Change Era Name : Gregorian [${numberYear}] To Japanese : Mismatched Era Name [${japaneseEraName} ${japaneseYear}]`);
+        }
+      }
+      else if(beforeInputYearEraName !== eraValueGregorian && afterInputYearEraName === eraValueGregorian) {
+        // 和暦から西暦に切り替えた場合
+        const beforeJapaneseEraName = japaneseEras[beforeInputYearEraName].name;
+        const gregorianYear = japaneseYearToGregorianYear(beforeInputYearEraName, numberYear);
+        inputYear.value = gregorianYear;
+        console.log(`Change Era Name : Japanese [${beforeJapaneseEraName} ${numberYear}] To Gregorian [${gregorianYear}]`);
+      }
+    }
+    
+    beforeInputYearEraName = afterInputYearEraName;  // 変更後のセレクトボックスの値を控えておく
+    validateAndCalc();
+    
+    /**
+     * 指定の DOM 要素の入力値が不正かどうか判定する
+     * 
+     * @param {HTMLElement} element DOM 要素
+     * @return {boolean} 入力値が空か `.invalid` CSS クラスが付与されていれば `true` (不正) とする
+     */
+    function isInvalid(element) {
+      return element.value === '' || element.classList.contains(invalidCssClassName);
+    }
+  });
+  
+  /**
+   * 当該テキストボックスの入力値を置換した上で入力チェックと入学・卒業年表の計算・表示を行う
+   * 
+   * @param {UIEvent} event イベント
+   */
+  const replaceThenValidateAndCalc = event => {
+    event.target.value = event.target.value
+      .replace((/[０-９]/gu), text => String.fromCharCode(text.charCodeAt(0) - 0xFEE0))  // 全角数字を半角に変換する
+      .replace((/[^0-9]/gu), '');  // 半角数字以外の入力値を削除する
+    validateAndCalc();
+  };
+  $('input-year' ).addEventListener('input', replaceThenValidateAndCalc);
+  $('input-month').addEventListener('input', replaceThenValidateAndCalc);
+  $('input-date' ).addEventListener('input', replaceThenValidateAndCalc);
+  
+  // 「計算」ボタン押下時 : 入学・卒業年表が正常に表示できたら URL パラメータに書き出す
+  $('button-calc').addEventListener('click', () => {
+    const isSucceeded = validateAndCalc();
+    if(!isSucceeded) return;
+    const url = new URL(location);
+    url.searchParams.set('yearEraName', $('input-year-era-name').value);
+    url.searchParams.set('year'       , $('input-year'         ).value);
+    url.searchParams.set('month'      , $('input-month'        ).value);
+    url.searchParams.set('date'       , $('input-date'         ).value);
+    history.pushState(null, null, url.search);
+    console.log(`History Pushed : [${url.search}]`);
+  });
+  
+  // 「クリア」ボタン押下時 : 「元号」セレクトボックスを「西暦」にし年月日を空欄にした上で `.invalid` CSS クラスを外す
+  $('button-remove').addEventListener('click', () => {
+    beforeInputYearEraName         = eraValueGregorian;
+    $('input-year-era-name').value = eraValueGregorian;
+    $('input-year' ).value = '';
+    $('input-month').value = '';
+    $('input-date' ).value = '';
+    $('input-year' ).classList.remove(invalidCssClassName);
+    $('input-month').classList.remove(invalidCssClassName);
+    $('input-date' ).classList.remove(invalidCssClassName);
+    showErrorMessages([]);
+  });
+  
+  /**
+   * サンプルとして20年前の今日日付を生年月日として入学・卒業年表を表示させる
+   */
+  const calcExample = () => {
+    beforeInputYearEraName = eraValueGregorian;
+    $('input-year-era-name').value = eraValueGregorian;
+    const exampleDate = new Date();
+    exampleDate.setFullYear(exampleDate.getFullYear() - 20);  // 20年前の今日日付を利用する
+    $('input-year' ).value = String(exampleDate.getFullYear());
+    $('input-month').value = String(exampleDate.getMonth() + 1);
+    $('input-date' ).value = String(exampleDate.getDate());
+    validateAndCalc();
+  };
+  $('button-example').addEventListener('click', calcExample);
+  
+  /**
+   * URL パラメータが全て揃っていれば取得する
+   * 
+   * @return {{yearEraName: string, year: string, month: string, date: string} | null} URL パラメータのオブジェクト・一つでもパラメータが揃っていなければ `null`
+   */
+  const getParams = () => {
+    const params = [...new URLSearchParams(location.search)].reduce((acc, pair) => ({...acc, [pair[0]]: pair[1]}), {});
+    if(params.yearEraName != null && [eraValueGregorian, ...Object.keys(japaneseEras)].includes(params.yearEraName)
+       && params.year != null && params.month != null && params.date != null) {
+      return params;
+    }
+    return null;
+  }
+  
+  // 画面初期表示時の処理 : URL パラメータがあればそれを利用しなければサンプル値を使用する
+  const initialParams = getParams();
+  if(initialParams) {
+    console.log(`Init : Set Values From Params : [${initialParams.yearEraName}] [${initialParams.year} 年] [${initialParams.month} 月] [${initialParams.date} 日]`);
+    beforeInputYearEraName         = initialParams.yearEraName;
+    $('input-year-era-name').value = initialParams.yearEraName;
+    $('input-year'         ).value = initialParams.year;
+    $('input-month'        ).value = initialParams.month;
+    $('input-date'         ).value = initialParams.date;
+    validateAndCalc();
+  }
+  else {
+    console.log('Init : Example');
+    calcExample();
+  }
+  
+  // `history.pushState()` 後に「前のページに戻る」が発生した場合
+  window.addEventListener('popstate', () => {
+    const params = getParams();
+    if(params) {
+      console.log(`Pop State : Reset To Params : [${params.yearEraName}] [${params.year} 年] [${params.month} 月] [${params.date} 日]`);
+      beforeInputYearEraName         = params.yearEraName;
+      $('input-year-era-name').value = params.yearEraName;
+      $('input-year'         ).value = params.year;
+      $('input-month'        ).value = params.month;
+      $('input-date'         ).value = params.date;
+      validateAndCalc();
+    }
+    else {
+      console.log('Pop State : No Params. Do Nothing');
+    }
+  });
+  
+  
+  // Business Logic
+  // ================================================================================
+  
+  /**
+   * 入学・卒業年表を計算する
+   * 
+   * @param {number} birthYear 年
+   * @param {number} birthMonth 月
+   * @param {number} birthDate 日
+   * @return {Array<{ description: string, gregorianYear: number, japaneseEraName: string, japaneseYear: number, month: number, date: number, age: number }>} 入学・卒業年表
+   */
+  function calcResumeYears(birthYear, birthMonth, birthDate) {
+    console.log(`Calc Resume Years : [${birthYear} 年] [${birthMonth} 月] [${birthDate} 日]`);
+    // 4月1日生まれまでは「早生まれ」で生年 + 6年が小学校入学年 ⇔ 4月2日以降生まれは生年 + 7年が小学校入学年
+    const isBornEarly = (birthMonth <= 3) || (birthMonth === 4 && birthDate === 1);
+    const firstGregorianYear = birthYear + 6 + (isBornEarly ? 0 : 1);  // 小学校入学年を基準とする
+    const resume = [
+      {
+        description: '小学校入学',
+        gregorianYear: firstGregorianYear,
+        month: 4,
+        date : 1
+      },
+      {
+        description: '小学校卒業',
+        gregorianYear: firstGregorianYear + 6,
+        month: 3,
+        date : 31
+      },
+      {
+        description: '中学校入学',
+        gregorianYear: firstGregorianYear + 6,
+        month: 4,
+        date : 1
+      },
+      {
+        description: '中学校卒業',
+        gregorianYear: firstGregorianYear + 9,
+        month: 3,
+        date : 31
+      },
+      {
+        description: '高校入学',
+        gregorianYear: firstGregorianYear + 9,
+        month: 4,
+        date : 1
+      },
+      {
+        description: '高校卒業',
+        gregorianYear: firstGregorianYear + 12,
+        month: 3,
+        date : 31
+      },
+      {
+        description: '大学入学',
+        gregorianYear: firstGregorianYear + 12,
+        month: 4,
+        date : 1
+      },
+      {
+        description: '短大卒業',
+        gregorianYear: firstGregorianYear + 14,
+        month: 3,
+        date : 31
+      },
+      {
+        description: '大学卒業',
+        gregorianYear: firstGregorianYear + 16,
+        month: 3,
+        date : 31
+      }
+    ]
+      .map(resume => {
+        // 西暦情報を基に和暦情報を足す
+        const { japaneseEraName, japaneseYear } = gregorianYearToJapaneseYear(resume.gregorianYear, resume.month, resume.date);
+        resume.japaneseEraName = japaneseEraName;
+        resume.japaneseYear = japaneseYear;
+        // 当該年月における年齢を足す
+        resume.age = calcAge(birthYear, birthMonth, birthDate, new Date(resume.gregorianYear, resume.month - 1, resume.date));
+        return resume;
+      });
+    return resume;
+  }
+  
+  /**
+   * 和暦から西暦を算出する
+   * 
+   * @param {string} eraName 元号・定数 `japaneseEras` のキー名
+   * @param {number} japaneseYear 当該元号における和暦年
+   * @return {number} 西暦
+   */
+  function japaneseYearToGregorianYear(eraName, japaneseYear) {
+    return japaneseEras[eraName].startYear + Number(japaneseYear) - 1;
+  }
+  
+  /**
+   * 西暦から和暦を算出する
+   * 
+   * @param {number} gregorianYear 西暦
+   * @param {number} month 月・未指定の場合は 1 月として扱う
+   * @param {number} date 日・未指定の場合は 1 日として扱う
+   * @return {{ japaneseEraName: string, japaneseYear: number }} 元号・和暦年
+   */
+  function gregorianYearToJapaneseYear(gregorianYear, month = 1, date = 1) {  // デフォルト引数
+    const dateObject = new Date(gregorianYear, month - 1, date);
+    const parts = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', { era:'long' }).formatToParts(dateObject);
+    const japaneseEraName = parts.find(part => part.type === 'era' ).value;
+    const rawJapaneseYear = parts.find(part => part.type === 'year').value;
+    const japaneseYear = rawJapaneseYear === '元' ? 1 : Number(rawJapaneseYear);  // 「元年」の場合は数字の 1 に直す
+    return { japaneseEraName, japaneseYear };
+  }
+  
+  /**
+   * 生年月日と対象日付から年齢を計算する
+   * 
+   * @param {number} birthYear 年
+   * @param {number} birthMonth 月
+   * @param {number} birthDate 日
+   * @param {Date} targetDateObject 対象日付の Date オブジェクト
+   * @return {number} 年齢
+   */
+  function calcAge(birthYear, birthMonth, birthDate, targetDateObject) {
+    // 今年の誕生日を迎えているかどうかで調整する
+    const thisYearsBirthday = new Date(targetDateObject.getFullYear(), birthMonth - 1, birthDate);
+    const age = targetDateObject.getFullYear() - birthYear - (targetDateObject < thisYearsBirthday ? 1 : 0);
+    return age;
+  }
+  
+});
+
+    </script>
+  </head>
+  <body>
+
+<div class="wrapper">
+  <h1 class="title"><a href="https://neos21.net/" target="_blank" title="Author : Neo">入学・卒業年計算</a></h1>
+  
+  <div class="input-form">
+    <label for="input-year-era-name">
+      <select id="input-year-era-name" accesskey="e">
+        <option id="input-era-gregorian" value="gregorian" selected>西暦</option>
+        <option id="input-era-reiwa"     value="reiwa"             >令和</option>
+        <option id="input-era-heisei"    value="heisei"            >平成</option>
+        <option id="input-era-showa"     value="showa"             >昭和</option>
+      </select>
+    </label>
+    <input type="text" id="input-year"  value="" accesskey="y" maxlength="4" autocomplete="off" inputmode="numeric" pattern="\d*"><label for="input-year" >年</label>
+    <input type="text" id="input-month" value="" accesskey="m" maxlength="2" autocomplete="off" inputmode="numeric" pattern="\d*"><label for="input-month">月</label>
+    <input type="text" id="input-date"  value="" accesskey="d" maxlength="2" autocomplete="off" inputmode="numeric" pattern="\d*"><label for="input-date" >日</label>
+    <button type="button" id="button-calc" accesskey="c">計算</button>
+  </div>
+  
+  <div class="buttons">
+    <button type="button" id="button-remove"  accesskey="r">クリア</button>
+    <button type="button" id="button-example" accesskey="s">サンプル</button>
+  </div>
+  
+  <div id="error-messages"></div>
+  
+  <div id="resume-table"></div>
+</div>
+
+<a href="https://github.com/Neos21/calc-resume-years" target="_blank" id="github-link" title="GitHub Repository">GitHub</a>
+
+  </body>
+</html>
